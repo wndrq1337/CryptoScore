@@ -1,0 +1,2 @@
+# CryptoScore
+CryptoScore indicator
