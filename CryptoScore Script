@@ -1,5 +1,5 @@
 //@version=5
-indicator("CryptoScore+Div", overlay=false)
+indicator("CryptoScoreV2", overlay=false)
 
 // Ишимоку
 t = ta.sma((ta.highest(high, 9) + ta.lowest(low, 9)) / 2, 1)
@@ -12,7 +12,6 @@ iScore = close > cloudTop ? 1 : close < cloudBot ? 0 : 0.5
 
 // RSI
 r = ta.rsi(close, 14)
-// Custom clamp implementation
 rScore = math.min(math.max((r - 35) / (65 - 35), 0), 1)
 
 // MACD
@@ -25,11 +24,12 @@ maScore = (close > ta.sma(close, 50) ? 1 : 0) + (close > ta.ema(close, 20) ? 1 :
 // Волатильность
 vol = (ta.atr(14) / close + ta.stdev(close, 14) / close + ta.sma(high - low, 14) / close) / 3
 
-// Дивергенция
+// Дивергенции
 rsiBear = ta.falling(r, 2) and ta.rising(close, 2) and r[2] < r[4]
 rsiBull = ta.rising(r, 2) and ta.falling(close, 2) and r[2] > r[4]
 macdBear = ta.falling(macd - sig, 2) and ta.rising(close, 2) and macd[2] - sig[2] < macd[4] - sig[4]
 macdBull = ta.rising(macd - sig, 2) and ta.falling(close, 2) and macd[2] - sig[2] > macd[4] - sig[4]
+
 divScore = (rsiBull or macdBull) ? 0.15 : (rsiBear or macdBear) ? -0.15 : 0
 
 // Веса
@@ -41,14 +41,16 @@ mw = 0.2 + vw
 // Итог
 score = iScore * tw + rScore * rw + mScore * mw + maScore * 0.15 + divScore
 
-// Определение цвета MA
-maColor = vol > 0.015 ? color.red : color.black
-
-// Построение графиков
+// Графики
 plot(score, "SCORE", #2962FF, 2)
 hline(0.65, "BUY", #4CAF50, hline.style_dotted)
 hline(0.35, "SELL", #FF5252, hline.style_dotted)
 
-// Построение средней скользящей с динамическим цветом
-maLine = ta.sma(score, 20) // Пример: средняя скользящая для SCORE
+// Визуализация дивергенций
+bgcolor(rsiBull or macdBull ? color.new(color.green, 80) : na)
+bgcolor(rsiBear or macdBear ? color.new(color.red, 80) : na)
+
+// Цвет MA
+maColor = vol > 0.015 ? color.red : color.black
+maLine = ta.sma(score, 20)
 plot(maLine, "MA of SCORE", maColor, 1)
